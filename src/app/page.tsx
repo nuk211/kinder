@@ -1,101 +1,193 @@
-import Image from "next/image";
+//DONE
+'use client';
+
+import React, { useState } from 'react';
+import Navbar from '@/components/Navbar';
+import Link from 'next/link';
+import { GraduationCap, Users, ArrowRight, Globe, Sun, Stars } from 'lucide-react';
+
+type Language = 'en' | 'ar';
+
+const translations = {
+  en: {
+    welcome: "Welcome to",
+    subtitle: "Streamlined child management system for parents and staff",
+    forParents: "For Parents",
+    forStaff: "For Staff",
+    parentDesc: "Easily pickup your child using our secure QR code system. Track daily activities in real-time.",
+    staffDesc: "Manage children, attendance, and pickup notifications efficiently and securely.",
+    parentPortal: "Parent Portal",
+    staffPortal: "Staff Portal",
+    switchLanguage: "العربية"
+  },
+  ar: {
+    welcome: "مرحباً بكم في",
+    subtitle: "نظام إدارة متطور للأطفال للآباء والموظفين",
+    forParents: "للوالدين",
+    forStaff: "للموظفين",
+    parentDesc: "استلم طفلك بسهولة باستخدام نظام رمز QR الآمن. تتبع الأنشطة اليومية في الوقت الفعلي.",
+    staffDesc: "إدارة الأطفال والحضور وإشعارات الاستلام بكفاءة وأمان.",
+    parentPortal: "بوابة الوالدين",
+    staffPortal: "بوابة الموظفين",
+    switchLanguage: "English"
+  }
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [language, setLanguage] = useState<Language>('en');
+  const t = translations[language];
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-[10px] opacity-30">
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute -bottom-8 right-20 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-6000"></div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {/* Decorative Elements */}
+        <div className="absolute top-20 left-10 transform -rotate-12 animate-float animation-delay-2000">
+          <div className="text-6xl">🎨</div>
+        </div>
+        <div className="absolute top-40 right-10 transform rotate-12 animate-float animation-delay-4000">
+          <div className="text-6xl">📚</div>
+        </div>
+        <div className="absolute bottom-20 left-10 transform rotate-12 animate-float">
+          <div className="text-6xl">🌟</div>
+        </div>
+        <div className="absolute bottom-40 right-10 transform -rotate-12 animate-float animation-delay-6000">
+          <div className="text-6xl">✏️</div>
+        </div>
+      </div>
+
+      {/* Language Switcher */}
+      <button
+        onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+        className={`absolute top-4 ${language === 'ar' ? 'left-4' : 'right-4'} bg-white/80 p-2 rounded-full hover:bg-white transition-all duration-200 z-10 flex items-center gap-2 shadow-md hover:scale-105`}
+      >
+        <Globe className="h-5 w-5 text-pink-500" />
+        <span className="text-sm font-medium text-pink-500">
+          {t.switchLanguage}
+        </span>
+      </button>
+
+      <div className="relative">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center mb-16 animate-fade-up">
+            <h1 className="text-5xl font-bold mb-4 transform transition-all duration-300 ease-in-out font-comic">
+              {t.welcome}{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-blue-500 relative inline-block animate-wave">
+                SunWay
+                <span className="absolute -top-6 right-0 text-3xl animate-spin-slow">✨</span>
+              </span>
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto font-comic">
+              {t.subtitle}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Parent Card */}
+            <div className="group relative overflow-hidden transform transition-all duration-300 ease-in-out hover:translate-y-[-8px] animate-fade-up">
+              <div className="bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-4 border-pink-200 h-full">
+                <div className="mb-6">
+                  <div className="h-16 w-16 bg-pink-100 rounded-2xl flex items-center justify-center mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                    <Users className="h-8 w-8 text-pink-500" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-3 font-comic">{t.forParents}</h2>
+                  <p className="text-gray-600 mb-6 leading-relaxed h-[72px] font-comic">
+                    {t.parentDesc}
+                  </p>
+                </div>
+                <Link 
+                  href="/parent"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-pink-600 hover:to-blue-600 transition-all duration-200 font-comic transform hover:scale-105"
+                >
+                  {t.parentPortal}
+                  <ArrowRight className={`h-4 w-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
+                </Link>
+              </div>
+            </div>
+
+            {/* Staff Card */}
+            <div className="group relative overflow-hidden transform transition-all duration-300 ease-in-out hover:translate-y-[-8px] animate-fade-up animation-delay-200">
+              <div className="bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 border-4 border-blue-200 h-full">
+                <div className="mb-6">
+                  <div className="h-16 w-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                    <GraduationCap className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-3 font-comic">{t.forStaff}</h2>
+                  <p className="text-gray-600 mb-6 leading-relaxed h-[72px] font-comic">
+                    {t.staffDesc}
+                  </p>
+                </div>
+                <Link 
+                  href="/admin"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 font-comic transform hover:scale-105"
+                >
+                  {t.staffPortal}
+                  <ArrowRight className={`h-4 w-4 ${language === 'ar' ? 'rotate-180' : ''}`} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes wave {
+          0%, 100% { transform: rotate(-2deg); }
+          50% { transform: rotate(2deg); }
+        }
+        @keyframes fade-up {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animate-wave {
+          animation: wave 3s ease-in-out infinite;
+        }
+        .animate-fade-up {
+          animation: fade-up 0.5s ease-out forwards;
+        }
+        .animate-spin-slow {
+          animation: spin 4s linear infinite;
+        }
+        .animation-delay-200 {
+          animation-delay: 0.2s;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        .animation-delay-6000 {
+          animation-delay: 6s;
+        }
+        .font-comic {
+          font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+      `}</style>
+    </main>
   );
 }

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TABLE Attendance MODIFY COLUMN status ENUM('PRESENT', 'ABSENT', 'PICKED_UP');

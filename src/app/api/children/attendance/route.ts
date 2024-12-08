@@ -1,5 +1,6 @@
+// src/app/api/children/attendance/route.ts
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'; // Adjust this import based on your project structure
+import prisma from '@/lib/prisma';
 
 export async function GET(request: Request) {
   try {
@@ -7,15 +8,17 @@ export async function GET(request: Request) {
     const range = url.searchParams.get('range') || 'week';
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
 
     const startDate = new Date(today);
     if (range === 'month') {
       startDate.setDate(startDate.getDate() - 30);
     } else {
-      startDate.setDate(startDate.getDate() - 7); // Default to weekly range
+      startDate.setDate(startDate.getDate() - 7);
     }
+    startDate.setHours(0, 0, 0, 0);
 
+    // Get all attendance records for the date range
     const attendanceRecords = await prisma.attendance.findMany({
       where: {
         date: {
@@ -25,14 +28,8 @@ export async function GET(request: Request) {
       },
       include: {
         child: {
-          select: {
-            id: true,
-            name: true,
-            parent: {
-              select: {
-                name: true,
-              },
-            },
+          include: {
+            parent: true,
           },
         },
       },
@@ -41,74 +38,92 @@ export async function GET(request: Request) {
       },
     });
 
+    // Get total students count
     const totalStudents = await prisma.child.count();
-    const presentCount = attendanceRecords.filter((record) => record.status === 'PRESENT').length;
 
-    const dailyStats = attendanceRecords.reduce((acc, record) => {
-      const dateKey = record.date.toISOString().split('T')[0];
-      if (!acc[dateKey]) {
-        acc[dateKey] = {
-          date: dateKey,
-          present: 0,
-          absent: 0,
-          total: 0,
-        };
-      }
-      acc[dateKey].total += 1;
+    // Calculate daily statistics
+    const dailyStats = [];
+    let currentDate = new Date(startDate);
 
-      if (record.status === 'PRESENT') acc[dateKey].present += 1;
-      if (record.status === 'ABSENT') acc[dateKey].absent += 1;
+    while (currentDate <= today) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      
+      // Filter records for current day
+      const dayRecords = attendanceRecords.filter(record => 
+        record.date.toISOString().split('T')[0] === dateStr
+      );
 
-      return acc;
-    }, {});
+      // Count different statuses for the day
+      const stats = {
+        date: dateStr,
+        present: dayRecords.filter(r => r.status === 'PRESENT').length,
+        absent: dayRecords.filter(r => r.status === 'ABSENT').length,
+        pickUps: dayRecords.filter(r => r.status === 'PICKED_UP').length,
+        total: totalStudents,
+      };
 
-    const dailyStatsArray = Object.values(dailyStats);
+      dailyStats.push(stats);
+      
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
 
-    const presentChildren = attendanceRecords
-      .filter((record) => record.status === 'PRESENT')
-      .map((record) => ({
-        id: record.child.id,
-        name: record.child.name,
-        parentName: record.child.parent?.name || 'Unknown',
-      }));
-
-    return NextResponse.json({
-      dailyStats: dailyStatsArray,
-      totalStudents,
-      presentChildren,
-    });
-  } catch (error) {
-    console.error('Database Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch attendance' }, { status: 500 });
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const data = await request.json();
-
-    // Update child details, including parent if specified
-    const updatedChild = await prisma.child.update({
-      where: { id: data.id },
-      data: {
-        name: data.name,
-        status: data.status,
-        parent: {
-          update: {
-            name: data.parent.name,
-            email: data.parent.email,
-            phoneNumber: data.parent.phoneNumber,
-          },
-        },
+    // Get currently present children
+    const presentChildren = await prisma.child.findMany({
+      where: {
+        status: 'PRESENT',
       },
       include: {
         parent: true,
+        attendanceRecords: {
+          where: {
+            date: {
+              gte: new Date(today.setHours(0, 0, 0, 0)),
+            },
+            status: 'PRESENT',
+          },
+          orderBy: {
+            date: 'desc',
+          },
+          take: 1,
+        },
       },
     });
 
-    return NextResponse.json(updatedChild);
+    // Calculate averages
+    const weeklyAverage = Math.round(
+      dailyStats.slice(0, 7).reduce((acc, day) => acc + day.present, 0) / 
+      Math.min(dailyStats.length, 7)
+    );
+
+    const monthlyAverage = Math.round(
+      dailyStats.reduce((acc, day) => acc + day.present, 0) / 
+      dailyStats.length
+    );
+
+    // Format present children data
+    const formattedPresentChildren = presentChildren.map(child => ({
+      id: child.id,
+      name: child.name,
+      parentName: child.parent.name,
+      status: child.status,
+      checkInTime: child.attendanceRecords[0]?.date.toISOString(),
+      checkOutTime: child.attendanceRecords[0]?.checkOutTime?.toISOString(),
+    }));
+
+    return NextResponse.json({
+      dailyStats: dailyStats.reverse(), // Most recent first
+      weeklyAverage,
+      monthlyAverage,
+      totalStudents,
+      presentChildren: formattedPresentChildren,
+    });
+
   } catch (error) {
-    console.error('Error updating child details:', error);
-    return NextResponse.json({ error: 'Failed to update child details' }, { status: 500 });
+    console.error('Database Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch attendance data' }, 
+      { status: 500 }
+    );
   }
 }

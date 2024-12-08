@@ -36,6 +36,7 @@ interface ChildFormData {
   qrCode?: string
 }
 
+
 const ChildrenList = () => {
   const [children, setChildren] = useState<Child[]>([])
   const [loading, setLoading] = useState(true)
@@ -82,7 +83,29 @@ const ChildrenList = () => {
       console.error('Error fetching parents:', error);
     }
   };
+  //////////////////////////////////////
+  const updateChildStatus = async (childId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/children/attendance/${childId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update status');
+      }
+
+      // Refresh the children list after successful update
+      await fetchChildren();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to update status');
+    }
+  };
+  /////////////////////////////////////////////
   const handleCreateChild = async () => {
     setIsSubmitting(true)
     try {
@@ -204,8 +227,6 @@ const ChildrenList = () => {
         return 'bg-green-100 text-green-800'
       case 'ABSENT':
         return 'bg-red-100 text-red-800'
-      case 'PICKUP_REQUESTED':
-        return 'bg-yellow-100 text-yellow-800'
       case 'PICKED_UP':
         return 'bg-gray-100 text-gray-800'
       default:
@@ -279,11 +300,19 @@ const ChildrenList = () => {
                     <div className="text-sm text-gray-900">{child.parent.name}</div>
                     <div className="text-sm text-gray-500">{child.parent.phoneNumber}</div>
                   </td>
+                  {/* ///////////////////////////////////// */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(child.status)}`}>
-                      {child.status.replace('_', ' ')}
-                    </span>
+                    <select
+                      value={child.status}
+                      onChange={(e) => updateChildStatus(child.id, e.target.value)}
+                      className={`px-2 text-xs font-semibold rounded-full ${getStatusColor(child.status)}`}
+                    >
+                      <option value="PRESENT">PRESENT</option>
+                      <option value="ABSENT">ABSENT</option>
+                      <option value="PICKED_UP">PICKED UP</option>
+                    </select>
                   </td>
+                  {/* ///////////////////////////////// */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(child.updatedAt).toLocaleDateString()}
                   </td>
@@ -388,20 +417,26 @@ const ChildrenList = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
-
+                  {/*  */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Status</label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      onChange={(e) => {
+                        if (mode === 'edit' && selectedChild) {
+                          updateChildStatus(selectedChild.id, e.target.value);
+                        } else {
+                          setFormData({ ...formData, status: e.target.value });
+                        }
+                      }}
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       <option value="ABSENT">Absent</option>
                       <option value="PRESENT">Present</option>
-                      <option value="PICKUP_REQUESTED">Pickup Requested</option>
                       <option value="PICKED_UP">Picked Up</option>
                     </select>
                   </div>
+                  {/* //////////////////////////////////////////////// */}
                   {mode === 'create' && (
       <div>
         <label className="block text-sm font-medium text-gray-700">Parent</label>

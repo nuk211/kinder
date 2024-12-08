@@ -32,15 +32,73 @@ const translations = {
     attendance: "Attendance",
     parents: "Parents",
     switchLanguage: "العربية",
+    notificationTitle: "Notifications",
+    clearAll: "Clear All",
+    markAllAsRead: "Mark all as read",
+    noNotifications: "No notifications",
+    checkedIn: "checked in",
+    pickedUp: "picked up",
+    by: "by",
+    present: "Present Children",
+    recent: "Recent Activities",
+    // Added missing translations
+    dashboardOverview: "Dashboard Overview",
+    recentActivities: "Recent Activities",
+    pickedUpBy: "Picked up by",
+    presentChildren: "Present Children",
+    checkInQRCode: "Check-in QR Code",
+    totalChildren: "Total Children",
+    activeChildren: "Active Children",
+    totalParents: "Total Parents",
+    todayAttendance: "Today's Attendance",
+    generateQR: "Generate QR Code",
+    scanQR: "Scan QR Code",
+    pickupRequests: "Pickup Requests",
+    attendanceHistory: "Attendance History",
+    viewAll: "View All",
+    status: "Status",
+    time: "Time",
+    date: "Date",
+    actions: "Actions"
   },
   ar: {
     dashboard: "لوحة التحكم",
     children: "الأطفال",
-    attendance: "الحضور",
-    parents: "الآباء",
+    attendance: "الحضور والانصراف",
+    parents: "أولياء الأمور",
     switchLanguage: "English",
+    notificationTitle: "الإشعارات",
+    clearAll: "مسح الكل",
+    markAllAsRead: "تعليم الكل كمقروء",
+    noNotifications: "لا توجد إشعارات",
+    checkedIn: "تم تسجيل حضور",
+    pickedUp: "تم استلام",
+    pickupRequests: "طلبات استلام الاطفال",
+    by: "بواسطة",
+    present: "الأطفال الحاضرون",
+    recent: "النشاطات الأخيرة",
+    // Added missing translations
+    dashboardOverview: "نظرة عامة على لوحة التحكم",
+    recentActivities: "النشاطات الأخيرة",
+    pickedUpBy: "تم الاستلام بواسطة",
+    presentChildren: "الأطفال الحاضرون",
+    checkInQRCode: "رمز QR للحضور",
+    totalChildren: "إجمالي الأطفال",
+    activeChildren: "الأطفال النشطون",
+    totalParents: "إجمالي أولياء الأمور",
+    todayAttendance: "الحضور اليوم",
+    generateQR: "إنشاء رمز QR",
+    scanQR: "مسح رمز QR",
+    attendanceHistory: "سجل الحضور",
+    viewAll: "عرض الكل",
+    status: "الحالة",
+    time: "الوقت",
+    date: "التاريخ",
+    actions: "الإجراءات"
   }
 };
+
+
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -55,7 +113,7 @@ export default function AdminPage() {
     try {
       const response = await fetch('/api/admin/dashboard');
       const data = await response.json();
-
+  
       // Update notifications
       if (data.recentActivities?.length > 0) {
         const newActivities = data.recentActivities
@@ -64,12 +122,12 @@ export default function AdminPage() {
             processedIds.current.add(activity.id);
             return {
               id: activity.id,
-              message: `${activity.childName} has been ${
-                activity.type === 'CHECK_IN' ? 'checked in' : 'picked up'
-              } by ${activity.parentName}`,
+              message: language === 'ar' 
+                ? `${activity.childName} ${activity.type === 'CHECK_IN' ? t.checkedIn : t.pickedUp} ${t.by} ${activity.parentName}`
+                : `${activity.childName} has been ${activity.type === 'CHECK_IN' ? t.checkedIn : t.pickedUp} ${t.by} ${activity.parentName}`,
               type: activity.type,
               read: false,
-              timestamp: new Date().toLocaleString('en-US', {
+              timestamp: new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true,
@@ -248,6 +306,7 @@ export default function AdminPage() {
                   notifications={notifications}
                   presentChildren={presentChildren}
                   onNotificationUpdate={setNotifications}
+                  language={language}
                 />
               )}
               {activeTab === 'children' && <ChildrenList />}

@@ -37,6 +37,7 @@
     "react-dom": "^18.2.0",
     "react-qr-code": "^2.0.15",
     "recharts": "^2.14.1",
+    "sonner": "^1.7.1",
     "tailwind-merge": "^2.1.0",
     "tailwindcss-animate": "^1.0.7",
     "twilio": "^4.23.0",

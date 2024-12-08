@@ -12,17 +12,14 @@ interface ChildAttendance {
   checkOutTime?: string;
   parentName: string;
 }
-
 interface AttendanceRecord {
   date: string;
   present: number;
   absent: number;
   total: number;
-  checkIns: number;
   pickUps: number;
   children: ChildAttendance[];
 }
-
 interface AttendanceStats {
   dailyStats: AttendanceRecord[];
   weeklyAverage: number;
@@ -34,6 +31,7 @@ interface AttendanceStats {
 const AttendanceManagement = () => {
   const [dateRange, setDateRange] = useState<'week' | 'month'>('week');
   const [loading, setLoading] = useState(true);
+  const [isRTL, setIsRTL] = useState(false);
   const [stats, setStats] = useState<AttendanceStats>({
     dailyStats: [],
     weeklyAverage: 0,
@@ -42,9 +40,22 @@ const AttendanceManagement = () => {
     presentChildren: []
   });
 
+  // RTL detection on mount and language change
+  useEffect(() => {
+    const updateRTL = () => {
+      const direction = document.documentElement.dir || 'ltr';
+      setIsRTL(direction === 'rtl');
+    };
+
+    updateRTL();
+    window.addEventListener('languagechange', updateRTL);
+    return () => window.removeEventListener('languagechange', updateRTL);
+  }, []);
+
+  // Fetch data initially and setup refresh interval
   useEffect(() => {
     fetchAttendanceData();
-    const interval = setInterval(fetchAttendanceData, 60000); // Update every minute
+    const interval = setInterval(fetchAttendanceData, 60000);
     return () => clearInterval(interval);
   }, [dateRange]);
 
@@ -57,9 +68,16 @@ const AttendanceManagement = () => {
       }
       const data = await response.json();
 
-      // Ensure all expected fields exist in the API response
+      // Process and sort the data
+      const processedData = {
+        ...data,
+        dailyStats: (data.dailyStats || []).sort((a: AttendanceRecord, b: AttendanceRecord) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        )
+      };
+
       setStats({
-        dailyStats: data.dailyStats || [],
+        dailyStats: processedData.dailyStats,
         weeklyAverage: data.weeklyAverage || 0,
         monthlyAverage: data.monthlyAverage || 0,
         totalStudents: data.totalStudents || 0,
@@ -67,7 +85,6 @@ const AttendanceManagement = () => {
       });
     } catch (error) {
       console.error('Error fetching attendance data:', error);
-      // Fallback to defaults in case of an error
       setStats({
         dailyStats: [],
         weeklyAverage: 0,
@@ -80,42 +97,44 @@ const AttendanceManagement = () => {
     }
   };
 
-  const today = stats.dailyStats.length > 0 ? stats.dailyStats[0] : {
+  const today = stats.dailyStats.length > 0 ? stats.dailyStats[stats.dailyStats.length - 1] : {
     date: new Date().toISOString().split('T')[0],
     present: 0,
     absent: 0,
     total: 0,
-    checkIns: 0,
     pickUps: 0,
     children: []
   };
 
+  // Prepare chart data
+  const chartData = isRTL ? [...stats.dailyStats].reverse() : stats.dailyStats;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+        <Loader2 className="animate-spin h-12 w-12 text-purple-600" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header and Date Range Selector */}
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Attendance Management</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setDateRange('week')}
-            className={`px-4 py-2 rounded ${
-              dateRange === 'week' ? 'bg-purple-600 text-white' : 'bg-gray-100'
+            className={`px-4 py-2 rounded transition-colors ${
+              dateRange === 'week' ? 'bg-purple-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
             Week
           </button>
           <button
             onClick={() => setDateRange('month')}
-            className={`px-4 py-2 rounded ${
-              dateRange === 'month' ? 'bg-purple-600 text-white' : 'bg-gray-100'
+            className={`px-4 py-2 rounded transition-colors ${
+              dateRange === 'month' ? 'bg-purple-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
             Month
@@ -138,77 +157,121 @@ const AttendanceManagement = () => {
           <p className="text-2xl font-bold">{stats.monthlyAverage}</p>
         </div>
         <div className="bg-white p-4 rounded-lg shadow text-center">
-          <p className="text-sm text-gray-500">Today</p>
-          <p className="text-2xl font-bold">{today.present} Present</p>
+          <p className="text-sm text-gray-500">Today Present</p>
+          <p className="text-2xl font-bold">{today.present}</p>
         </div>
       </div>
 
-      {/* Attendance Graph */}
+      {/* Chart */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Attendance Trends</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={stats.dailyStats}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date) => new Date(date).toLocaleDateString()}
-              />
-              <YAxis />
-              <Tooltip
-                formatter={(value: number, name: string) => [
-                  value,
-                  name.charAt(0).toUpperCase() + name.slice(1),
-                ]}
-                labelFormatter={(label) => new Date(label).toLocaleDateString()}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="present" stroke="#10B981" name="Present" strokeWidth={2} />
-              <Line type="monotone" dataKey="absent" stroke="#EF4444" name="Absent" strokeWidth={2} />
-              <Line type="monotone" dataKey="checkIns" stroke="#3B82F6" name="Check-ins" strokeWidth={2} />
-              <Line type="monotone" dataKey="pickUps" stroke="#8B5CF6" name="Pick-ups" strokeWidth={2} />
-            </LineChart>
+          <LineChart
+            data={chartData}
+            margin={{ 
+              top: 5, 
+              right: isRTL ? 20 : 30, 
+              left: isRTL ? 30 : 20, 
+              bottom: 5 
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(date) => new Date(date).toLocaleDateString()}
+              reversed={isRTL}
+            />
+            <YAxis 
+              orientation={isRTL ? "right" : "left"}
+            />
+            <Tooltip
+              formatter={(value: number, name: string) => [
+                value,
+                name.charAt(0).toUpperCase() + name.slice(1)
+              ]}
+              labelFormatter={(label) => new Date(label).toLocaleDateString()}
+              contentStyle={{ 
+                textAlign: isRTL ? 'right' : 'left',
+                direction: isRTL ? 'rtl' : 'ltr'
+              }}
+            />
+            <Legend 
+              align={isRTL ? "right" : "left"}
+              layout="horizontal"
+            />
+            <Line 
+              type="monotone" 
+              dataKey="present" 
+              stroke="#10B981" 
+              name="Present" 
+              strokeWidth={2} 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="absent" 
+              stroke="#EF4444" 
+              name="Absent" 
+              strokeWidth={2} 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="pickUps" 
+              stroke="#8B5CF6" 
+              name="Pick-ups" 
+              strokeWidth={2} 
+            />
+          </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Present Children List */}
+      {/* Present Children Table */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-medium mb-4">Currently Present Children</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parent</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-in Time</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Parent
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Check-in Time
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {(stats.presentChildren || []).map((child) => (
-                <tr key={child.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{child.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{child.parentName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {child.checkInTime ? new Date(child.checkInTime).toLocaleTimeString() : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        child.status === 'PRESENT'
-                          ? 'bg-green-100 text-green-800'
-                          : child.status === 'PICKUP_REQUESTED'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {child.status ? child.status.replace('_', ' ') : 'Unknown'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {stats.presentChildren.length === 0 && (
+              {stats.presentChildren.length > 0 ? (
+                stats.presentChildren.map((child) => (
+                  <tr key={child.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {child.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {child.parentName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {child.checkInTime ? new Date(child.checkInTime).toLocaleTimeString() : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        child.status === 'PRESENT' ? 'bg-green-100 text-green-800' :
+                        child.status === 'PICKED_UP' ? 'bg-gray-100 text-gray-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {child.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
                     No children present at the moment

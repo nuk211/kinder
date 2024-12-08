@@ -22,6 +22,7 @@ enum ChildStatus {
 enum AttendanceStatus {
   PRESENT
   ABSENT
+  PICKED_UP
 }
 
 model User {
@@ -32,6 +33,7 @@ model User {
   role        Role     @default(PARENT)
   phoneNumber String?
   children    Child[]
+  notifications Notification[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -44,6 +46,7 @@ model Child {
   status            ChildStatus  @default(ABSENT)
   qrCode            String       @unique
   attendanceRecords Attendance[]
+  notifications     Notification[]
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 }
@@ -60,4 +63,22 @@ model Attendance {
   updatedAt    DateTime         @updatedAt
 
   @@index([childId])
+}
+model Notification {
+  id        String   @id @default(uuid())
+  message   String
+  type      String   // 'CHECK_IN' or 'PICK_UP'
+  read      Boolean  @default(false)
+  userId    String   // Admin who should receive this notification
+  childId   String
+  child     Child    @relation(fields: [childId], references: [id])
+  parentId  String
+  parent    User     @relation(fields: [parentId], references: [id])
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([childId])
+  @@index([parentId])
 }

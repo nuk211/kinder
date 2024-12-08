@@ -111,7 +111,7 @@ const ParentList = () => {
         body: JSON.stringify({ password: formData.password }),
       });
       
-      if (!response.ok) throw new Error('Failed to update password');
+      if (!response.ok) throw new Error('Password Must Be 6 Characters');
       
       setShowPasswordModal(false);
       resetForm();
@@ -208,7 +208,6 @@ const ParentList = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Password</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -224,23 +223,7 @@ const ParentList = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">{parent.phoneNumber || 'N/A'}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 flex items-center">
-                    <span className="font-mono">
-                      {passwordVisibility[parent.id] ? parent.password : '••••••'}
-                    </span>
-                    <button
-                      onClick={() => togglePasswordVisibility(parent.id)}
-                      className="ml-2 text-gray-400 hover:text-gray-600"
-                    >
-                      {passwordVisibility[parent.id] ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </td>
+               
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
                     onClick={() => openPasswordModal(parent)}
